@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Test</title>
+        <link href="style.css" rel="stylesheet" type="text/css"/>
+
+        <style>
+            body{
+                background-color: #651016;
+            }
+        </style>
+    </head>
+
+    <body>
+        <ul class="grid">
+            <li class="cell">
+                <p>1</p>
+            </li>
+            <li class="cell">
+                <p>2</p>
+                <button type="button" data-quick-view>Quick view</button>
+            </li>
+            <li class="fullwidth is-hidden" id="quickview-01">
+                <button type="button" data-close>Close 2</button>
+                <p>fullwidth 2</p>
+                <p>This grid item needs to stretch the full width of the page, and force other grid items to reflow around it, whilst remaining "visually connected" to the preceeding grid item.</p>
+                <p>Test <a href="#">inline link</a>.</p>
+            </li>
+        </ul>
+    </body>
+
+    <script>
+        const quickViewButtons = document.querySelectorAll('[data-quick-view]');
+        const closeButtons = document.querySelectorAll('[data-close]');
+        const fullwidthCards = document.querySelectorAll('.fullwidth');
+        let toggle; // Quick view <button>.
+        let toggleParent; // <li>.
+        let fullwidth; // Fullwidth card to be "injected".
+
+        const openQuickView = (toggle, toggleParent, fullwidth) => {
+            toggle.setAttribute('aria-expanded', 'true');
+            toggleParent.classList.toggle('is-selected');
+            fullwidth.classList.toggle('is-hidden');
+            // Make fullwidth card keyboard focusable.
+            fullwidth.setAttribute('tabIndex', '0');
+        };
+
+        const closeQuickView = (toggle, toggleParent, fullwidth) => {
+            toggle.setAttribute('aria-expanded', 'false');
+            toggleParent.classList.toggle('is-selected');
+            fullwidth.classList.toggle('is-hidden');
+            fullwidth.removeAttribute('tabIndex');
+        };
+
+        quickViewButtons.forEach(quickView => {
+            // Add appropriate ARIA attributes for "toggle" behaviour.
+            fullwidth = quickView.parentElement.nextElementSibling;
+            quickView.setAttribute('aria-expanded', 'false');
+            quickView.setAttribute('aria-controls', fullwidth.id);
+
+            quickView.addEventListener('click', (e) => {
+                toggle = e.target;
+                toggleParent = toggle.parentElement;
+                fullwidth = toggleParent.nextElementSibling;
+
+                // Open (or close) fullwidth card.
+                if (toggle.getAttribute('aria-expanded') === 'false') {
+                    // Do we have another fullwidth card already open? If so, close it.
+                    fullwidthCards.forEach(fullwidthOpen => {
+                        if (!fullwidthOpen.classList.contains('is-hidden')) {
+                            toggleParentOpen =
+                                fullwidthOpen.previousElementSibling;
+                            toggleOpen = toggleParentOpen.querySelector(
+                                '[data-quick-view]'
+                            );
+
+                            closeQuickView(toggleOpen, toggleParentOpen, fullwidthOpen);
+                        }
+                    });
+
+                    openQuickView(toggle, toggleParent, fullwidth);
+                } else {
+                    closeQuickView(toggle, toggleParent, fullwidth);
+                }
+            });
+        });
+
+        closeButtons.forEach(close => {
+            close.addEventListener('click', (e) => {
+                fullwidth = e.target.parentElement;
+                toggleParent = e.target.parentElement.previousElementSibling;
+                toggle = toggleParent.querySelector('[data-quick-view]');
+
+                closeQuickView(toggle, toggleParent, fullwidth);
+                toggle.focus(); // Return keyboard focus to "toggle" button.
+            });
+        });
+    </script>
+</html>
